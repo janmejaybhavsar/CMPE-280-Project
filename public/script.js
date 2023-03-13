@@ -73,7 +73,7 @@ navigator.mediaDevices
       call.answer(myVideoStream);
       const video = document.createElement("video");
       call.on("stream", (userVideoStream) => {
-        addVideoStream(video, userVideoStream);
+        addVideoStream(video, userVideoStream, false);
       });
       call.on("close", () => {
         video.remove();
@@ -87,7 +87,7 @@ navigator.mediaDevices
         const call = peer.call(userId, screenShareStream);
         const video = document.createElement("video");
         call.on("stream", (userVideoStream) => {
-          addVideoStream(video, userVideoStream);
+          addVideoStream(video, userVideoStream, true);
         });
         call.on("close", () => {
           video.remove();
@@ -104,7 +104,7 @@ const connectToNewUser = (userId, stream) => {
   const call = peer.call(userId, stream);
   const video = document.createElement("video");
   call.on("stream", (userVideoStream) => {
-    addVideoStream(video, userVideoStream);
+    addVideoStream(video, userVideoStream, isScreenSharing);
   });
   call.on("close", () => {
     video.remove();
@@ -196,12 +196,24 @@ screenShareButton.addEventListener("click", () => {
     // Resume camera stream
     myVideoStream.getVideoTracks()[0].enabled = true;
     isScreenSharing = false;
+    myVideo.style.border = 'none';
+    myVideo.id = "";
     addVideoStream(myVideo, myVideoStream);
   } else {
     // Share screen
     navigator.mediaDevices
       .getDisplayMedia({ video: true })
       .then((stream) => {
+        stream.getVideoTracks()[0].addEventListener('ended', () => {
+          screenShareStream.getTracks().forEach((track) => track.stop());
+          screenShareStream = null;
+          myVideoStream.getVideoTracks()[0].enabled = true;
+          isScreenSharing = false;
+          addVideoStream(myVideo, myVideoStream);
+          myVideo.style.border = 'none';
+          myVideo.id = "";
+          console.log('The user has ended sharing the screen');
+      });
         // Stop camera stream
         myVideoStream.getVideoTracks()[0].enabled = false;
         // Save screen share stream
@@ -209,6 +221,8 @@ screenShareButton.addEventListener("click", () => {
         isScreenSharing = true;
         // Show screen share stream
         myVideo.srcObject = screenShareStream;
+        myVideo.style.border = "2px solid red";
+        myVideo.id = "screen_share_video";
         myVideo.addEventListener("loadedmetadata", () => {
           myVideo.play();
         });

@@ -59,6 +59,16 @@ video {
   -moz-transform: rotateY(180deg);
 }
 
+#screen_share_video {
+  height: 300px;
+  border-radius: 1rem;
+  margin: 0.5rem;
+  width: 400px;
+  object-fit: cover;
+  transform: rotateY(0deg);
+  -webkit-transform: rotateY(0deg);
+}
+
 .options {
   padding: 1rem;
   display: flex;
