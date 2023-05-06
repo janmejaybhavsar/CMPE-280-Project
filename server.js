@@ -1,7 +1,9 @@
 require('dotenv').config();
 const express = require("express");
 const app = express();
-const server = require("http").Server(app);
+const User = require("./User")
+var bodyParser = require("body-parser")
+const server = require("http").Server(app)
 const { v4: uuidv4 } = require("uuid");
 app.set("view engine", "ejs");
 const io = require("socket.io")(server, {
@@ -13,7 +15,7 @@ const { ExpressPeerServer } = require("peer");
 const opinions = {
   debug: true,
 }
-
+app.use(bodyParser.urlencoded({ extended: true }));
 const { Configuration, OpenAIApi } = require("openai");
 const config = new Configuration({
   organization: process.env.OPENAI_ORG,
@@ -43,7 +45,23 @@ async function sendMessageToChatbot(message) {
 app.use("/peerjs", ExpressPeerServer(server, opinions));
 app.use(express.static("public"));
 
-app.get("/", (req, res) => {
+// app.get("/", (req, res) => {
+//   res.redirect(`/${uuidv4()}`);
+// });
+
+
+app.get("/", function (req, res) {
+    res.render("register");
+});
+  
+// Handling user signup
+app.post("/register", async (req, res) => {
+  
+  const user = await User.create({
+    username: req.body.username,
+    password: req.body.password
+  });
+  console.log(user)
   res.redirect(`/${uuidv4()}`);
 });
 
@@ -67,4 +85,17 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(process.env.PORT || 3030);
+
+
+const uri = "mongodb+srv://admin:admin1234@cluster0.uhp24dd.mongodb.net/?retryWrites=true&w=majority";
+const mongoose = require('mongoose')
+
+mongoose.connect( uri)
+.then(()=>{
+    console.log("Connected to the Database.");
+})
+.catch(err => {
+    console.log(err);
+});
+
+server.listen( 3030);
