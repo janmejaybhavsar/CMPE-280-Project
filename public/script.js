@@ -220,10 +220,16 @@ inviteButton.addEventListener("click", (e) => {
 });
 
 screenShareButton.addEventListener("click", () => {
+  let stopVdo = document.querySelector("#stopVideo");
+  let ss = document.querySelector("#screenShare");
   if (isScreenSharing) {
+    stopVdo.style.display = "flex";
+    ss.classList.remove("background__red");
     closeScreenShare();
   } else {
     // Share screen
+    ss.classList.add("background__red");
+    stopVdo.style.display = "none";
     navigator.mediaDevices
       .getDisplayMedia({ video: true })
       .then((stream) => {

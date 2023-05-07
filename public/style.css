@@ -96,6 +96,11 @@ video {
   margin: 0 0.5rem;
 }
 
+.options__button:hover {
+  cursor: pointer;
+  background-color: #8ab4f8;
+}
+
 .background__red {
   background-color: #f6484a;
 }
