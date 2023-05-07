@@ -80,7 +80,7 @@ navigator.mediaDevices
       peers[call.peer] = { call, video };
     });
 
-    socket.on("user-connected", (userId) => {
+    socket.on("user-connected", (userId, userName) => {
       if (isScreenSharing) {
         // Call new user with screen share stream
         const call = peer.call(userId, screenShareStream);
@@ -95,6 +95,8 @@ navigator.mediaDevices
       } else{
         connectToNewUser(userId, stream);
       }
+      const userConnectedMessage = `${userName} has joined the room`;
+      displayChatMessage(userConnectedMessage, "info");
     });
   });
 
@@ -102,13 +104,45 @@ const connectToNewUser = (userId, stream) => {
   console.log('I call someone' + userId);
   const call = peer.call(userId, stream);
   const video = document.createElement("video");
-  call.on("stream", (userVideoStream) => {
+  call.on("stream", async (userVideoStream) => {
     addVideoStream(video, userVideoStream, isScreenSharing);
   });
   call.on("close", () => {
     video.remove();
   });
   peers[userId] = { call, video };
+};
+
+const displayChatMessage = (message, className) => {
+  const messageElement = document.createElement("div");
+  messageElement.classList.add("message");
+  messageElement.classList.add(className);
+  messageElement.innerHTML = `<span>${message}</span>`;
+  messages.appendChild(messageElement);
+};
+
+const closeScreenShare = () => {
+  if (screenShareStream) {
+    // Stop screen sharing
+    screenShareStream.getTracks().forEach((track) => track.stop());
+    screenShareStream = null;
+    // Resume camera stream
+    myVideoStream.getVideoTracks()[0].enabled = true;
+    isScreenSharing = false;
+    // Display local video stream without screen sharing
+    myVideo.style.border = 'none';
+    myVideo.id = "";
+    addVideoStream(myVideo, myVideoStream);
+    // Notify other users to stop receiving screen share stream
+    for (let peerId in peers) {
+      const peerConnection = peers[peerId].call;
+      peerConnection.peerConnection.getSenders().forEach((sender) => {
+        if (sender.track && sender.track.kind === "video") {
+          sender.replaceTrack(myVideoStream.getVideoTracks()[0]);
+        }
+      });
+    }
+  }
 };
 
 peer.on("open", (id) => {
@@ -187,30 +221,14 @@ inviteButton.addEventListener("click", (e) => {
 
 screenShareButton.addEventListener("click", () => {
   if (isScreenSharing) {
-    // Stop sharing screen
-    if (screenShareStream) {
-      screenShareStream.getTracks().forEach((track) => track.stop());
-      screenShareStream = null;
-    }
-    // Resume camera stream
-    myVideoStream.getVideoTracks()[0].enabled = true;
-    isScreenSharing = false;
-    myVideo.style.border = 'none';
-    myVideo.id = "";
-    addVideoStream(myVideo, myVideoStream);
+    closeScreenShare();
   } else {
     // Share screen
     navigator.mediaDevices
       .getDisplayMedia({ video: true })
       .then((stream) => {
         stream.getVideoTracks()[0].addEventListener('ended', () => {
-          screenShareStream.getTracks().forEach((track) => track.stop());
-          screenShareStream = null;
-          myVideoStream.getVideoTracks()[0].enabled = true;
-          isScreenSharing = false;
-          addVideoStream(myVideo, myVideoStream);
-          myVideo.style.border = 'none';
-          myVideo.id = "";
+          closeScreenShare();
           console.log('The user has ended sharing the screen');
       });
         // Stop camera stream
@@ -227,15 +245,12 @@ screenShareButton.addEventListener("click", () => {
         });
         // Send screen share stream to other users
         for (let peerId in peers) {
-          const call = peer.call(peerId, screenShareStream);
-          const video = document.createElement("video");
-          call.on("stream", (userVideoStream) => {
-            addVideoStream(video, userVideoStream);
+          const peerConnection = peers[peerId].call;
+          peerConnection.peerConnection.getSenders().forEach((sender) => {
+            if (sender.track && sender.track.kind === "video") {
+              sender.replaceTrack(screenShareStream.getVideoTracks()[0]);
+            }
           });
-          call.on("close", () => {
-            video.remove();
-          });
-          peers[peerId].call = call;
         }
       });
   }
@@ -250,3 +265,13 @@ socket.on("createMessage", (message, userName) => {
         <span>${message}</span>
     </div>`;
 });
+
+//handle user disconnect
+socket.on("user-disconnected", (userId) => {
+  console.log('user disconnected' + userId);
+  if (peers[userId]) {
+    peers[userId].call.close();
+    peers[userId].video.remove();
+  }
+}
+);
