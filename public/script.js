@@ -3,12 +3,13 @@ const videoGrid = document.getElementById("video-grid");
 const myVideo = document.createElement("video");
 const showChat = document.querySelector("#showChat");
 const backBtn = document.querySelector(".header__back");
+const endButton = document.querySelector("#endButton");
 myVideo.muted = true;
 
 backBtn.addEventListener("click", () => {
   document.querySelector(".main__left").style.display = "flex";
   document.querySelector(".main__left").style.flex = "1";
-  document.querySelector(".main__right").style.display = "none";
+  document.querySelector(".main__right").style.flex = "0.3";
   document.querySelector(".header__back").style.display = "none";
 });
 
@@ -185,11 +186,13 @@ const stopVideo = document.querySelector("#stopVideo");
 muteButton.addEventListener("click", () => {
   const enabled = myVideoStream.getAudioTracks()[0].enabled;
   if (enabled) {
+    muteButton.title = "Unmute";
     myVideoStream.getAudioTracks()[0].enabled = false;
     html = `<i class="fas fa-microphone-slash"></i>`;
     muteButton.classList.toggle("background__red");
     muteButton.innerHTML = html;
   } else {
+    muteButton.title = "Mute";
     myVideoStream.getAudioTracks()[0].enabled = true;
     html = `<i class="fas fa-microphone"></i>`;
     muteButton.classList.toggle("background__red");
@@ -200,11 +203,13 @@ muteButton.addEventListener("click", () => {
 stopVideo.addEventListener("click", () => {
   const enabled = myVideoStream.getVideoTracks()[0].enabled;
   if (enabled) {
+    stopVideo.title = "Start Video";
     myVideoStream.getVideoTracks()[0].enabled = false;
     html = `<i class="fas fa-video-slash"></i>`;
     stopVideo.classList.toggle("background__red");
     stopVideo.innerHTML = html;
   } else {
+    stopVideo.title = "Stop Video";
     myVideoStream.getVideoTracks()[0].enabled = true;
     html = `<i class="fas fa-video"></i>`;
     stopVideo.classList.toggle("background__red");
@@ -219,17 +224,23 @@ inviteButton.addEventListener("click", (e) => {
   );
 });
 
+endButton.addEventListener("click", (e) => {
+  window.location.href = "/";
+});
+
 screenShareButton.addEventListener("click", () => {
   let stopVdo = document.querySelector("#stopVideo");
   let ss = document.querySelector("#screenShare");
   if (isScreenSharing) {
-    stopVdo.style.display = "flex";
+    screenShareButton.title = "Share Screen";
+    stopVdo.style.pointerEvents = "";
     ss.classList.remove("background__red");
     closeScreenShare();
   } else {
     // Share screen
+    screenShareButton.title = "Stop Sharing Screen";
     ss.classList.add("background__red");
-    stopVdo.style.display = "none";
+    stopVdo.style.pointerEvents = "none";
     navigator.mediaDevices
       .getDisplayMedia({ video: true })
       .then((stream) => {
@@ -273,11 +284,13 @@ socket.on("createMessage", (message, userName) => {
 });
 
 //handle user disconnect
-socket.on("user-disconnected", (userId) => {
+socket.on("user-disconnected", (userId, userName) => {
   console.log('user disconnected' + userId);
   if (peers[userId]) {
     peers[userId].call.close();
     peers[userId].video.remove();
+    const userDisconnectedMessage = `${userName} has left the room`;
+    displayChatMessage(userDisconnectedMessage, "info");
   }
 }
 );
