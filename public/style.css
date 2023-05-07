@@ -26,6 +26,9 @@
 .logo > h3 {
   color: var(--main-light);
 }
+.logo > h4 {
+  color: var(--main-light);
+}
 
 .main {
   overflow: hidden;
@@ -81,6 +84,7 @@ video {
 
 .options__right {
   margin-left: auto;
+  display: flex;
 }
 
 .options__button {
@@ -94,6 +98,15 @@ video {
   font-size: 1.2rem;
   width: 50px;
   margin: 0 0.5rem;
+}
+
+#endButton {
+  background-color: #f6484a;
+}
+
+.options__button:hover {
+  cursor: pointer;
+  background-color: #8ab4f8;
 }
 
 .background__red {
@@ -162,14 +175,18 @@ video {
   border-radius: 5px;
 }
 
+.info {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #000000;
+  font-size: 1rem;
+}
+
 #video-grid {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-}
-
-#showChat {
-  display: none;
 }
 
 .header__back {
@@ -179,6 +196,11 @@ video {
   top: 17px;
   left: 28px;
   color: #fff;
+}
+
+.header__back__text {
+  display: flex;
+  margin-left: 0.5rem;
 }
 
 @media (max-width: 700px) {

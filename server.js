@@ -1,7 +1,9 @@
 require('dotenv').config();
 const express = require("express");
 const app = express();
-const server = require("http").Server(app);
+const User = require("./User")
+var bodyParser = require("body-parser")
+const server = require("http").Server(app)
 const { v4: uuidv4 } = require("uuid");
 app.set("view engine", "ejs");
 const io = require("socket.io")(server, {
@@ -13,7 +15,7 @@ const { ExpressPeerServer } = require("peer");
 const opinions = {
   debug: true,
 }
-
+app.use(bodyParser.urlencoded({ extended: true }));
 const { Configuration, OpenAIApi } = require("openai");
 const config = new Configuration({
   organization: process.env.OPENAI_ORG,
@@ -43,11 +45,38 @@ async function sendMessageToChatbot(message) {
 app.use("/peerjs", ExpressPeerServer(server, opinions));
 app.use(express.static("public"));
 
-app.get("/", (req, res) => {
-  res.redirect(`/${uuidv4()}`);
+// app.get("/", (req, res) => {
+//   res.redirect(`/${uuidv4()}`);
+// });
+
+
+app.get("/", async function (req, res) {
+  const user = await User.findOne({ username: req.query.username }); // Use req.query.username instead of req.body.username
+  if (user && user.inviteLink) {
+    res.redirect(`/${user.inviteLink}`);
+    return;
+  }
+    res.render("register");
+});
+  
+// Handling user signup
+app.post("/register", async (req, res) => {
+  const { username, password } = req.body;
+  const user = await User.findOneAndUpdate(
+    { username },
+    { username, password },
+    { upsert: true, new: true }
+  );
+  // Generate invite link
+  const inviteLink = uuidv4();
+  // Save invite link in the user's document
+  user.inviteLink = inviteLink;
+  await user.save();
+  console.log(user)
+  res.redirect(`/${inviteLink}`);
 });
 
-app.get("/:room", (req, res) => {
+app.get("/:room", async (req, res) => {
   res.render("room", { roomId: req.params.room });
 });
 
@@ -55,8 +84,11 @@ io.on("connection", (socket) => {
   socket.on("join-room", (roomId, userId, userName) => {
     socket.join(roomId);
     setTimeout(()=>{
-      socket.to(roomId).broadcast.emit("user-connected", userId);
-    }, 1000)
+      socket.broadcast.to(roomId).emit("user-connected", userId, userName);
+    }, 500)
+    socket.on("disconnect", () => {
+      socket.broadcast.to(roomId).emit("user-disconnected", userId, userName);
+    });
     socket.on("message", async (message) => {
       io.to(roomId).emit("createMessage", message, userName);
       if(message.includes("@ChatGPT")){
@@ -67,4 +99,17 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(process.env.PORT || 3030);
+
+
+const uri = "mongodb+srv://admin:admin1234@cluster0.uhp24dd.mongodb.net/?retryWrites=true&w=majority";
+const mongoose = require('mongoose')
+
+mongoose.connect( uri)
+.then(()=>{
+    console.log("Connected to the Database.");
+})
+.catch(err => {
+    console.log(err);
+});
+
+server.listen(3030);
