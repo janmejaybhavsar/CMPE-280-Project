@@ -73,7 +73,7 @@ io.on("connection", (socket) => {
   socket.on("join-room", (roomId, userId, userName) => {
     socket.join(roomId);
     setTimeout(()=>{
-      socket.to(roomId).broadcast.emit("user-connected", userId);
+      socket.broadcast.to(roomId).emit("user-connected", userId);
     }, 1000)
     socket.on("message", async (message) => {
       io.to(roomId).emit("createMessage", message, userName);

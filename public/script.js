@@ -18,7 +18,7 @@ showChat.addEventListener("click", () => {
   document.querySelector(".main__left").style.display = "none";
   document.querySelector(".header__back").style.display = "block";
 });
-
+const user = prompt("Enter your name how you would like to appear in the chat");
 
 var peer = new Peer({
   host: '127.0.0.1',
