@@ -101,7 +101,7 @@ io.on("connection", (socket) => {
 
 
 
-const uri = "mongodb+srv://admin:admin1234@cluster0.uhp24dd.mongodb.net/?retryWrites=true&w=majority";
+const uri = `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@cluster0.uhp24dd.mongodb.net/?retryWrites=true&w=majority`;
 const mongoose = require('mongoose')
 
 mongoose.connect( uri)
