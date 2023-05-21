@@ -6,6 +6,10 @@ var bodyParser = require("body-parser")
 const server = require("http").Server(app)
 const { v4: uuidv4 } = require("uuid");
 app.set("view engine", "ejs");
+const cors = require('cors');
+app.use(cors({
+	origin: "*"
+}))
 const io = require("socket.io")(server, {
   cors: {
     origin: '*'
