@@ -18,7 +18,7 @@ jest.mock('openai', () => ({
 describe('Chat Application', () => {
   beforeAll(async () => {
     // Connect to a test MongoDB database
-    await mongoose.connect('mongodb://localhost/testdb', {
+    await mongoose.connect(`mongodb:+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@cluster0.uhp24dd.mongodb.net/?retryWrites=true&w=majority`, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });

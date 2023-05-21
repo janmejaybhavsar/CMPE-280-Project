@@ -23,6 +23,7 @@ const user = prompt("Enter your name how you would like to appear in the chat");
 
 var peer = new Peer({
   host: '127.0.0.1',
+  secure: false,
   port: 3030,
   path: '/peerjs',
   config: {
